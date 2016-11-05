@@ -25,16 +25,10 @@ namespace BEA_ChatClient_Csharp
             StartClient(txtHost.Text);
         }
 
-        // The port number for the remote device.
+        // portnummer
         private const int port = 11000;
 
-        // ManualResetEvent instances signal completion.
-        private static ManualResetEvent connectDone =
-            new ManualResetEvent(false);
-        private static ManualResetEvent sendDone =
-            new ManualResetEvent(false);
-        private static ManualResetEvent receiveDone =
-            new ManualResetEvent(false);
+
 
         // The response from the remote device.
         private static String response = String.Empty;
@@ -58,15 +52,12 @@ namespace BEA_ChatClient_Csharp
                 // Connect to the remote endpoint.
                 client.BeginConnect(remoteEP,
                     new AsyncCallback(ConnectCallback), client);
-                connectDone.WaitOne();
 
                 // Send test data to the remote device.
-                Send(client, "This is a test<EOF>");
-                sendDone.WaitOne();
+                Send(client, "This is a test<EOF>$");
 
                 // Receive the response from the remote device.
                 Receive(client);
-                receiveDone.WaitOne();
 
                 // Write the response to the console.
                 Console.WriteLine("Response received : {0}", response);
@@ -96,7 +87,6 @@ namespace BEA_ChatClient_Csharp
                     client.RemoteEndPoint.ToString());
 
                 // Signal that the connection has been made.
-                connectDone.Set();
             }
             catch (Exception e)
             {
@@ -113,6 +103,7 @@ namespace BEA_ChatClient_Csharp
                 state.workSocket = client;
 
                 // Begin receiving the data from the remote device.
+                Console.WriteLine("BeginReceive");
                 client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                     new AsyncCallback(ReceiveCallback), state);
             }
@@ -151,7 +142,6 @@ namespace BEA_ChatClient_Csharp
                         response = state.sb.ToString();
                     }
                     // Signal that all bytes have been received.
-                    receiveDone.Set();
                 }
             }
             catch (Exception e)
@@ -182,7 +172,6 @@ namespace BEA_ChatClient_Csharp
                 Console.WriteLine("Sent {0} bytes to server.", bytesSent);
 
                 // Signal that all bytes have been sent.
-                sendDone.Set();
             }
             catch (Exception e)
             {
