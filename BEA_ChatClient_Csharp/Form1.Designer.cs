@@ -33,17 +33,19 @@
             this.Chatverlauf = new System.Windows.Forms.ListBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.txt_send = new System.Windows.Forms.TextBox();
-            this.btn_Send = new System.Windows.Forms.Button();
+            this.txtSend = new System.Windows.Forms.TextBox();
+            this.btnSend = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.button1 = new System.Windows.Forms.Button();
+            this.txtHost = new System.Windows.Forms.TextBox();
+            this.btnConnect = new System.Windows.Forms.Button();
+            this.txtUsername = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // ChannelListe
             // 
             this.ChannelListe.FormattingEnabled = true;
-            this.ChannelListe.Location = new System.Drawing.Point(490, 44);
+            this.ChannelListe.Location = new System.Drawing.Point(489, 66);
             this.ChannelListe.Name = "ChannelListe";
             this.ChannelListe.Size = new System.Drawing.Size(120, 124);
             this.ChannelListe.TabIndex = 0;
@@ -51,7 +53,7 @@
             // Benutzerliste
             // 
             this.Benutzerliste.FormattingEnabled = true;
-            this.Benutzerliste.Location = new System.Drawing.Point(490, 195);
+            this.Benutzerliste.Location = new System.Drawing.Point(489, 217);
             this.Benutzerliste.Name = "Benutzerliste";
             this.Benutzerliste.Size = new System.Drawing.Size(120, 160);
             this.Benutzerliste.TabIndex = 1;
@@ -60,7 +62,7 @@
             // 
             this.Chatverlauf.Enabled = false;
             this.Chatverlauf.FormattingEnabled = true;
-            this.Chatverlauf.Location = new System.Drawing.Point(13, 39);
+            this.Chatverlauf.Location = new System.Drawing.Point(12, 61);
             this.Chatverlauf.Name = "Chatverlauf";
             this.Chatverlauf.Size = new System.Drawing.Size(471, 316);
             this.Chatverlauf.TabIndex = 2;
@@ -68,7 +70,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(490, 28);
+            this.label1.Location = new System.Drawing.Point(489, 50);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(58, 13);
             this.label1.TabIndex = 3;
@@ -77,29 +79,29 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(490, 179);
+            this.label2.Location = new System.Drawing.Point(489, 201);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(107, 13);
             this.label2.TabIndex = 4;
             this.label2.Text = "anwesende Benutzer";
             // 
-            // txt_send
+            // txtSend
             // 
-            this.txt_send.Enabled = false;
-            this.txt_send.Location = new System.Drawing.Point(12, 361);
-            this.txt_send.Name = "txt_send";
-            this.txt_send.Size = new System.Drawing.Size(472, 20);
-            this.txt_send.TabIndex = 5;
+            this.txtSend.Enabled = false;
+            this.txtSend.Location = new System.Drawing.Point(11, 383);
+            this.txtSend.Name = "txtSend";
+            this.txtSend.Size = new System.Drawing.Size(472, 20);
+            this.txtSend.TabIndex = 5;
             // 
-            // btn_Send
+            // btnSend
             // 
-            this.btn_Send.Enabled = false;
-            this.btn_Send.Location = new System.Drawing.Point(490, 358);
-            this.btn_Send.Name = "btn_Send";
-            this.btn_Send.Size = new System.Drawing.Size(120, 23);
-            this.btn_Send.TabIndex = 6;
-            this.btn_Send.Text = "senden";
-            this.btn_Send.UseVisualStyleBackColor = true;
+            this.btnSend.Enabled = false;
+            this.btnSend.Location = new System.Drawing.Point(489, 380);
+            this.btnSend.Name = "btnSend";
+            this.btnSend.Size = new System.Drawing.Size(120, 23);
+            this.btnSend.TabIndex = 6;
+            this.btnSend.Text = "senden";
+            this.btnSend.UseVisualStyleBackColor = true;
             // 
             // label3
             // 
@@ -110,35 +112,53 @@
             this.label3.TabIndex = 7;
             this.label3.Text = "Server:";
             // 
-            // textBox1
+            // txtHost
             // 
-            this.textBox1.Location = new System.Drawing.Point(59, 6);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(194, 20);
-            this.textBox1.TabIndex = 8;
-            this.textBox1.Text = "localhost";
-            this.textBox1.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.txtHost.Location = new System.Drawing.Point(59, 6);
+            this.txtHost.Name = "txtHost";
+            this.txtHost.Size = new System.Drawing.Size(194, 20);
+            this.txtHost.TabIndex = 8;
+            this.txtHost.Text = "localhost";
+            this.txtHost.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
-            // button1
+            // btnConnect
             // 
-            this.button1.Location = new System.Drawing.Point(259, 4);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 9;
-            this.button1.Text = "connect";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.btnConnect.Location = new System.Drawing.Point(492, 4);
+            this.btnConnect.Name = "btnConnect";
+            this.btnConnect.Size = new System.Drawing.Size(117, 23);
+            this.btnConnect.TabIndex = 9;
+            this.btnConnect.Text = "connect";
+            this.btnConnect.UseVisualStyleBackColor = true;
+            this.btnConnect.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // txtUsername
+            // 
+            this.txtUsername.Location = new System.Drawing.Point(368, 6);
+            this.txtUsername.Name = "txtUsername";
+            this.txtUsername.Size = new System.Drawing.Size(115, 20);
+            this.txtUsername.TabIndex = 10;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(284, 9);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(78, 13);
+            this.label4.TabIndex = 11;
+            this.label4.Text = "Benutzername:";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(622, 392);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.textBox1);
+            this.ClientSize = new System.Drawing.Size(622, 414);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.txtUsername);
+            this.Controls.Add(this.btnConnect);
+            this.Controls.Add(this.txtHost);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.btn_Send);
-            this.Controls.Add(this.txt_send);
+            this.Controls.Add(this.btnSend);
+            this.Controls.Add(this.txtSend);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.Chatverlauf);
@@ -159,11 +179,13 @@
         private System.Windows.Forms.ListBox Chatverlauf;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.TextBox txt_send;
-        private System.Windows.Forms.Button btn_Send;
+        private System.Windows.Forms.TextBox txtSend;
+        private System.Windows.Forms.Button btnSend;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.TextBox txtHost;
+        private System.Windows.Forms.Button btnConnect;
+        private System.Windows.Forms.TextBox txtUsername;
+        private System.Windows.Forms.Label label4;
     }
 }
 

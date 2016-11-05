@@ -22,26 +22,9 @@ namespace BEA_ChatClient_Csharp
 
         private void button1_Click(object sender, EventArgs e)
         {
-            AsynchronousClient AC = new AsynchronousClient();
-            AC.StartClient();
+            StartClient(txtHost.Text);
         }
-    }
 
-    // State object for receiving data from remote device.
-    public class StateObject
-    {
-        // Client socket.
-        public Socket workSocket = null;
-        // Size of receive buffer.
-        public const int BufferSize = 256;
-        // Receive buffer.
-        public byte[] buffer = new byte[BufferSize];
-        // Received data string.
-        public StringBuilder sb = new StringBuilder();
-    }
-
-    public class AsynchronousClient
-    {
         // The port number for the remote device.
         private const int port = 11000;
 
@@ -56,7 +39,7 @@ namespace BEA_ChatClient_Csharp
         // The response from the remote device.
         private static String response = String.Empty;
 
-        public static void StartClient()
+        public static void StartClient(String host)
         {
             // Connect to a remote device.
             try
@@ -64,7 +47,7 @@ namespace BEA_ChatClient_Csharp
                 // Establish the remote endpoint for the socket.
                 // The name of the 
                 // remote device is "host.contoso.com".
-                IPHostEntry ipHostInfo = Dns.Resolve("localhost");
+                IPHostEntry ipHostInfo = Dns.Resolve(host);
                 IPAddress ipAddress = ipHostInfo.AddressList[0];
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
 
@@ -206,5 +189,18 @@ namespace BEA_ChatClient_Csharp
                 Console.WriteLine(e.ToString());
             }
         }
+    }
+
+    // State object for receiving data from remote device.
+    public class StateObject
+    {
+        // Client socket.
+        public Socket workSocket = null;
+        // Size of receive buffer.
+        public const int BufferSize = 256;
+        // Receive buffer.
+        public byte[] buffer = new byte[BufferSize];
+        // Received data string.
+        public StringBuilder sb = new StringBuilder();
     }
 }
