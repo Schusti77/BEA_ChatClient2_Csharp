@@ -87,7 +87,6 @@
             // 
             // txtSend
             // 
-            this.txtSend.Enabled = false;
             this.txtSend.Location = new System.Drawing.Point(11, 383);
             this.txtSend.Name = "txtSend";
             this.txtSend.Size = new System.Drawing.Size(472, 20);
@@ -95,13 +94,13 @@
             // 
             // btnSend
             // 
-            this.btnSend.Enabled = false;
             this.btnSend.Location = new System.Drawing.Point(489, 380);
             this.btnSend.Name = "btnSend";
             this.btnSend.Size = new System.Drawing.Size(120, 23);
             this.btnSend.TabIndex = 6;
             this.btnSend.Text = "senden";
             this.btnSend.UseVisualStyleBackColor = true;
+            this.btnSend.Click += new System.EventHandler(this.btnSend_Click);
             // 
             // label3
             // 
