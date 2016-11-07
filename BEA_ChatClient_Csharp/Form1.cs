@@ -22,7 +22,9 @@ namespace BEA_ChatClient_Csharp
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //StartClient(txtHost.Text);
+            //strings mit leerzeichen auffüllen und zusammensetzen zur nachricht, die übertragen wird
+            String msg = "A" + txtUsername.Text.PadRight(32) + "".PadRight(256);
+            SendToServer(msg);
         }
 
         // portnummer
@@ -46,7 +48,16 @@ namespace BEA_ChatClient_Csharp
 
         private void btnSend_Click(object sender, EventArgs e)
         {
-            SendToServer(txtSend.Text);
+            //strings mit leerzeichen auffüllen und zusammensetzen zur nachricht, die übertragen wird
+            String msg = "T" + "".PadRight(32) + txtSend.Text.PadRight(256);
+            SendToServer(msg);
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            //strings mit leerzeichen auffüllen und zusammensetzen zur nachricht, die übertragen wird
+            String msg = "Q" + "".PadRight(32) + txtSend.Text.PadRight(256);
+            SendToServer(msg);
         }
 
         //// The response from the remote device.

@@ -88,6 +88,7 @@
             // txtSend
             // 
             this.txtSend.Location = new System.Drawing.Point(11, 383);
+            this.txtSend.MaxLength = 256;
             this.txtSend.Name = "txtSend";
             this.txtSend.Size = new System.Drawing.Size(472, 20);
             this.txtSend.TabIndex = 5;
@@ -133,6 +134,7 @@
             // txtUsername
             // 
             this.txtUsername.Location = new System.Drawing.Point(368, 6);
+            this.txtUsername.MaxLength = 32;
             this.txtUsername.Name = "txtUsername";
             this.txtUsername.Size = new System.Drawing.Size(115, 20);
             this.txtUsername.TabIndex = 10;
@@ -166,6 +168,7 @@
             this.MaximizeBox = false;
             this.Name = "Form1";
             this.Text = "Form1";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
 
