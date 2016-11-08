@@ -129,7 +129,7 @@
             this.btnConnect.TabIndex = 9;
             this.btnConnect.Text = "connect";
             this.btnConnect.UseVisualStyleBackColor = true;
-            this.btnConnect.Click += new System.EventHandler(this.button1_Click);
+            this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
             // 
             // txtUsername
             // 

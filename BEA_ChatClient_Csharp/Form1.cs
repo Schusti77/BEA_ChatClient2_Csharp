@@ -15,20 +15,79 @@ namespace BEA_ChatClient_Csharp
 {
     public partial class Form1 : Form
     {
+        static IPEndPoint endPoint;
+        static int port = 11000;
+        static Thread Listener;
+        static bool working = false;
+        static String IDS;
+
         public Form1()
         {
             InitializeComponent();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnConnect_Click(object sender, EventArgs e)
         {
+            IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
+            endPoint = null;
+
+            //nach einer IPv4 Adresse suchen
+            foreach (IPAddress ip in hostEntry.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    endPoint = new IPEndPoint(ip, port);
+                    break;
+                }
+            }
+
+            //nach einer IPv6 Adresse suchen
+            if (endPoint == null)
+            {
+                foreach (IPAddress ip in hostEntry.AddressList)
+                {
+                    if (ip.AddressFamily == AddressFamily.InterNetworkV6)
+                    {
+                        endPoint = new IPEndPoint(ip, port);
+                        break;
+                    }
+                }
+            }
+
+            if (endPoint == null)
+            {
+                //Server-Rechner hat keine IP-Adresse
+                //entweder keine aktive Netzwerkkarte oder irgendwas faul
+                Console.ForegroundColor = ConsoleColor.Red;
+                Chatverlauf.Items.Add("[Fehler]:Dieser Rechner hat keine Verbindung zu einem Netzwerk");
+            }
+
+            //Netzwerk auf Servernachrichten abhören
+            IDS = null;
+            working = true;
+            Listener = new Thread(listen);
+            Listener.IsBackground = true;
+            Listener.Start();
+
             //strings mit leerzeichen auffüllen und zusammensetzen zur nachricht, die übertragen wird
             String msg = "A" + txtUsername.Text.PadRight(32) + "".PadRight(256);
             SendToServer(msg);
-        }
 
-        // portnummer
-        private const int port = 11000;
+            //warten auf die Serverantwort
+            DateTime starttime = DateTime.Now;
+            TimeSpan timediff = new TimeSpan(0, 0, 5);
+            while (IDS == null)
+            {
+                if (DateTime.Now - starttime > timediff)
+                    break;
+            }
+            if (IDS == null)
+                Chatverlauf.Items.Add("[Fehler]:Could not connect to server");
+            else
+            {
+                Chatverlauf.Items.Add("[OK]:Connection established");
+            }
+        }
 
         public static void SendToServer(String message)
         {
@@ -40,10 +99,83 @@ namespace BEA_ChatClient_Csharp
                 ProtocolType.Udp);
 
             byte[] msg = Encoding.ASCII.GetBytes(message);
-            Console.WriteLine("Sending data.");
+            //Console.WriteLine("Sending data.");
             // This call blocks. 
             s.SendTo(msg, endPoint);
             s.Close();
+        }
+
+        private static void listen(Object obj)
+        {
+            while (working)
+            {
+                Console.WriteLine("listener running");
+                Socket s = new Socket(endPoint.Address.AddressFamily,
+                SocketType.Dgram,
+                ProtocolType.Udp);
+                s.ReceiveTimeout = 1000;
+
+                // Creates an IpEndPoint to capture the identity of the sending host.
+                IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
+                EndPoint senderRemote = (EndPoint)sender;
+
+                // Binding is required with ReceiveFrom calls.
+                s.Bind(endPoint);
+                byte[] msg = new Byte[1 + 32 + 256];
+                //Console.WriteLine("Waiting to receive datagrams from client...");
+                // This call blocks.  
+                try
+                {
+                    s.ReceiveFrom(msg, 0, msg.Length, SocketFlags.None, ref senderRemote);
+
+                    Console.WriteLine(System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0'));
+                    MsgToProcess MTP = new MsgToProcess();
+                    MTP.Message = System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0');
+                    ThreadPool.QueueUserWorkItem(new WaitCallback(ProcessMessage), MTP);
+                }
+                catch (System.Net.Sockets.SocketException)
+                {
+                    //innerhalb des Socket.ReceiveTimeout keine Nachricht empfangen
+                    //nichts machen, einfach noch einen Loop in der While-Schleife
+                }
+                finally
+                {
+                    //socket immer schließen
+                    s.Close();
+                }
+            }
+        }
+
+        static void ProcessMessage(object obj)
+        {
+            MsgToProcess MTP = obj as MsgToProcess;
+            Console.WriteLine("Nachricht verarbeiten: {0}", MTP.Message);
+            String Nachrichtentyp = MTP.Message.Substring(0, 1);
+            String Argument1 = MTP.Message.Substring(1, 32);
+            String Argument2 = MTP.Message.Substring(33, 256);
+
+            switch (Nachrichtentyp)
+            {
+                case "A":
+                    {
+                        //Client anmelden
+                        //Argument1 = Benutzername
+                        //Argument2 = leer
+                        IDS = Argument1.Trim();
+                        break;
+                    }
+                case "T":
+                    {
+                        //Textnachricht empfangen
+                        break;
+                    }
+                default:
+                    {
+                        //unbekannte Nachricht empfangen
+                        //verwerfen
+                        break;
+                    }
+            }
         }
 
         private void btnSend_Click(object sender, EventArgs e)
@@ -58,168 +190,12 @@ namespace BEA_ChatClient_Csharp
             //strings mit leerzeichen auffüllen und zusammensetzen zur nachricht, die übertragen wird
             String msg = "Q" + "".PadRight(32) + txtSend.Text.PadRight(256);
             SendToServer(msg);
+            working = false;
         }
-
-        //// The response from the remote device.
-        //private static String response = String.Empty;
-
-        //public static void StartClient(String host)
-        //{
-        //    // Connect to a remote device.
-        //    try
-        //    {
-        //        // Establish the remote endpoint for the socket.
-        //        // The name of the 
-        //        // remote device is "host.contoso.com".
-        //        IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
-        //        IPAddress ipAddress = ipHostInfo.AddressList[0];
-        //        IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
-
-        //        // Create a TCP/IP socket.
-        //        Socket client = new Socket(AddressFamily.InterNetwork,
-        //            SocketType.Stream, ProtocolType.Tcp);
-
-        //        // Connect to the remote endpoint.
-        //        client.BeginConnect(remoteEP,
-        //            new AsyncCallback(ConnectCallback), client);
-
-        //        // Send test data to the remote device.
-        //        Send(client, "This is a test<EOF>$");
-
-        //        // Receive the response from the remote device.
-        //        Receive(client);
-
-        //        // Write the response to the console.
-        //        Console.WriteLine("Response received : {0}", response);
-
-        //        // Release the socket.
-        //        client.Shutdown(SocketShutdown.Both);
-        //        client.Close();
-
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e.ToString());
-        //    }
-        //}
-
-        //private static void ConnectCallback(IAsyncResult ar)
-        //{
-        //    try
-        //    {
-        //        // Retrieve the socket from the state object.
-        //        Socket client = (Socket)ar.AsyncState;
-
-        //        // Complete the connection.
-        //        client.EndConnect(ar);
-
-        //        Console.WriteLine("Socket connected to {0}",
-        //            client.RemoteEndPoint.ToString());
-
-        //        // Signal that the connection has been made.
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e.ToString());
-        //    }
-        //}
-
-        //private static void Receive(Socket client)
-        //{
-        //    try
-        //    {
-        //        // Create the state object.
-        //        StateObject state = new StateObject();
-        //        state.workSocket = client;
-
-        //        // Begin receiving the data from the remote device.
-        //        Console.WriteLine("BeginReceive");
-        //        client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-        //            new AsyncCallback(ReceiveCallback), state);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e.ToString());
-        //    }
-        //}
-
-        //private static void ReceiveCallback(IAsyncResult ar)
-        //{
-        //    try
-        //    {
-        //        // Retrieve the state object and the client socket 
-        //        // from the asynchronous state object.
-        //        StateObject state = (StateObject)ar.AsyncState;
-        //        Socket client = state.workSocket;
-
-        //        // Read data from the remote device.
-        //        int bytesRead = client.EndReceive(ar);
-
-        //        if (bytesRead > 0)
-        //        {
-        //            // There might be more data, so store the data received so far.
-        //            state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
-
-        //            // Get the rest of the data.
-        //            client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-        //                new AsyncCallback(ReceiveCallback), state);
-        //        }
-        //        else
-        //        {
-        //            // All the data has arrived; put it in response.
-        //            if (state.sb.Length > 1)
-        //            {
-        //                response = state.sb.ToString();
-        //            }
-        //            // Signal that all bytes have been received.
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e.ToString());
-        //    }
-        //}
-
-        //private static void Send(Socket client, String data)
-        //{
-        //    // Convert the string data to byte data using ASCII encoding.
-        //    byte[] byteData = Encoding.ASCII.GetBytes(data);
-
-        //    // Begin sending the data to the remote device.
-        //    client.BeginSend(byteData, 0, byteData.Length, 0,
-        //        new AsyncCallback(SendCallback), client);
-        //}
-
-        //private static void SendCallback(IAsyncResult ar)
-        //{
-        //    try
-        //    {
-        //        // Retrieve the socket from the state object.
-        //        Socket client = (Socket)ar.AsyncState;
-
-        //        // Complete sending the data to the remote device.
-        //        int bytesSent = client.EndSend(ar);
-        //        Console.WriteLine("Sent {0} bytes to server.", bytesSent);
-
-        //        // Signal that all bytes have been sent.
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e.ToString());
-        //    }
-        //}
     }
 
-    // State object for receiving data from remote device.
-    public class StateObject
+    class MsgToProcess
     {
-        // Client socket.
-        public Socket workSocket = null;
-        // Size of receive buffer.
-        public const int BufferSize = 256;
-        // Receive buffer.
-        public byte[] buffer = new byte[BufferSize];
-        // Received data string.
-        public StringBuilder sb = new StringBuilder();
+        public String Message { get; set; }
     }
 }
