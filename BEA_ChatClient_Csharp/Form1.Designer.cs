@@ -75,6 +75,7 @@
             this.txtSend.Name = "txtSend";
             this.txtSend.Size = new System.Drawing.Size(472, 20);
             this.txtSend.TabIndex = 5;
+            this.txtSend.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtSend_KeyDown);
             // 
             // btnSend
             // 
@@ -110,7 +111,7 @@
             this.btnConnect.Location = new System.Drawing.Point(492, 4);
             this.btnConnect.Name = "btnConnect";
             this.btnConnect.Size = new System.Drawing.Size(117, 23);
-            this.btnConnect.TabIndex = 9;
+            this.btnConnect.TabIndex = 10;
             this.btnConnect.Text = "connect";
             this.btnConnect.UseVisualStyleBackColor = true;
             this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
@@ -121,7 +122,7 @@
             this.txtUsername.MaxLength = 32;
             this.txtUsername.Name = "txtUsername";
             this.txtUsername.Size = new System.Drawing.Size(115, 20);
-            this.txtUsername.TabIndex = 10;
+            this.txtUsername.TabIndex = 9;
             // 
             // label4
             // 

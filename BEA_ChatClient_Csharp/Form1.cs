@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Net;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Net.Sockets;
 
@@ -17,11 +11,13 @@ namespace BEA_ChatClient_Csharp
     {
         static IPEndPoint ClientEP;
         static IPEndPoint ServerEP;
-        static int port = 11000;
+        static int sendport = 11000;
+        static int recport = 11001;
         static Thread Listener;
         static bool working = false;
         static String IDS;
         static String username;
+        Socket s;
 
         public Form1()
         {
@@ -43,13 +39,13 @@ namespace BEA_ChatClient_Csharp
             {
                 if (ip_s.AddressFamily == AddressFamily.InterNetwork)
                 {
-                    ServerEP = new IPEndPoint(ip_s, port);
+                    ServerEP = new IPEndPoint(ip_s, sendport);
                     //Server hat eine IPv4 Adresse, dem Client auch eine suchen
                     foreach (IPAddress ip_c in hostEntryClient.AddressList)
                     {
                         if (ip_c.AddressFamily == AddressFamily.InterNetwork)
                         {
-                            ClientEP = new IPEndPoint(ip_c, port);
+                            ClientEP = new IPEndPoint(ip_c, recport);
                             //Server hat eine IPv4 Adresse, dem Client auch eine suchen
                             break;
                         }
@@ -68,6 +64,13 @@ namespace BEA_ChatClient_Csharp
                 return; //Funktion beenden
             }
             Chatverlauf.Items.Add("[INFO]: Client aktiv auf IP: " + ClientEP.Address + ":" + ClientEP.Port);
+            Chatverlauf.Items.Add("[INFO]: Server IP ermittelt: " + ServerEP.Address + ":" + ServerEP.Port);
+
+            s = new Socket(ClientEP.Address.AddressFamily,
+                SocketType.Dgram,
+                ProtocolType.Udp);
+            s.Bind(ClientEP);
+
             //Netzwerk auf Servernachrichten abhören
             IDS = null;
             working = true;
@@ -88,14 +91,17 @@ namespace BEA_ChatClient_Csharp
             {
                 if (DateTime.Now - starttime > timediff)
                 {
-                    working = false;
+                    //working = false;
                     break;
                 }
             }
             if (IDS == null)
             {
                 Chatverlauf.Items.Add("[Fehler]:Could not connect to server");
+                working = false;
+                //Listener.Start();
                 btnConnect.Enabled = true;
+                s.Close();
             }
             else
             {
@@ -111,66 +117,25 @@ namespace BEA_ChatClient_Csharp
 
         public void SendToServer(String message)
         {
-            IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
-            IPEndPoint endPoint = new IPEndPoint(hostEntry.AddressList[2], 11000);
-
-            Socket s = new Socket(endPoint.Address.AddressFamily,
-                SocketType.Dgram,
-                ProtocolType.Udp);
-
             byte[] msg = Encoding.ASCII.GetBytes(message);
-            //Console.WriteLine("Sending data.");
-            // This call blocks. 
-            s.SendTo(msg, endPoint);
-            s.Close();
+            s.SendTo(msg, ServerEP);
         }
 
         private void listen(Object obj)
         {
+            byte[] msg = new Byte[1 + 32 + 256];
+            IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
+            EndPoint senderRemote = (EndPoint)sender;
+
             while (working)
             {
-                //Console.WriteLine("listener running");
-                Socket s = new Socket(ClientEP.Address.AddressFamily,
-                SocketType.Dgram,
-                ProtocolType.Udp);
-                s.ReceiveTimeout = 100;
-
-                // Creates an IpEndPoint to capture the identity of the sending host.
-                IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
-                EndPoint senderRemote = (EndPoint)sender;
-
-                // Binding is required with ReceiveFrom calls.
-                try { 
-                s.Bind(ClientEP);
-                }
-                catch
-                {
-                    Console.WriteLine("Socket gerade belegt. Nächste Runde wieder versuchen.");
-                    s.Close();
-                    continue;
-                }
-                byte[] msg = new Byte[1 + 32 + 256];
-                //Console.WriteLine("Waiting to receive datagrams from client...");
-                // This call blocks.  
-                try
-                {
                     s.ReceiveFrom(msg, 0, msg.Length, SocketFlags.None, ref senderRemote);
 
                     Console.WriteLine(System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0'));
                     MsgToProcess MTP = new MsgToProcess();
                     MTP.Message = System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0');
+                    Console.WriteLine(System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0'));
                     ThreadPool.QueueUserWorkItem(new WaitCallback(ProcessMessage), MTP);
-                }
-                catch (System.Net.Sockets.SocketException)
-                {
-                    //innerhalb des Socket.ReceiveTimeout keine Nachricht empfangen
-                    //nichts machen, einfach noch einen Loop in der While-Schleife
-                }
-                finally
-                {
-                    //socket immer schließen
-                    s.Close();
-                }
             }
         }
 
@@ -179,8 +144,8 @@ namespace BEA_ChatClient_Csharp
             MsgToProcess MTP = obj as MsgToProcess;
             Console.WriteLine("Nachricht verarbeiten: {0}", MTP.Message);
             String Nachrichtentyp = MTP.Message.Substring(0, 1);
-            String Argument1 = MTP.Message.Substring(1, 32);
-            String Argument2 = MTP.Message.Substring(33, 256);
+            String Argument1 = MTP.Message.Substring(1, 32).Trim();
+            String Argument2 = MTP.Message.Substring(33, 256).Trim();
 
             switch (Nachrichtentyp)
             {
@@ -190,9 +155,10 @@ namespace BEA_ChatClient_Csharp
                         //Argument1 = Benutzername
                         //Argument2 = leer
                         if (!Argument1.Equals(username))
+                        {
                             IDS = Argument1.Trim();
-                        //ist das Argument1 = dem username, dann hat der Client seine eigene MSG empfangen
-                        //da als Server wohl der localhost ausgewählt wurde. An andere Varianten wollen wir mal nicht denken
+                            Console.WriteLine("IDS gesetzt");
+                        }
                         break;
                     }
                 case "T":
@@ -201,7 +167,27 @@ namespace BEA_ChatClient_Csharp
                         //Argument1 = Benutzername
                         //Argument2 = Textnachricht
                         if (IDS != null)
-                            Chatverlauf.Items.Add("["+ Argument1+"]: " + Argument2);
+                            addLineToChat("["+ Argument1+"]: " + Argument2);
+                        break;
+                    }
+                case "S":
+                    {
+                        //Statusabfrage empfangen
+                        //Argument1 = IDS
+                        //Argument2 = Leer
+                        if (IDS != null)
+                            if (Argument1 == IDS)
+                                //Msg unverändert zurücksenden
+                                SendToServer(MTP.Message);
+                        break;
+                    }
+                case "U":
+                    {
+                        //Nutzerverzeichnis empfangen
+                        //Argument1 = Benutzername
+                        //Argument2 = Leer
+                        if (IDS != null)
+                            addLineToUser(Argument1);
                         break;
                     }
                 default:
@@ -213,19 +199,59 @@ namespace BEA_ChatClient_Csharp
             }
         }
 
+        delegate void SetTextCallback(string text);
+
+        private void addLineToChat(String line)
+        {
+            if (this.Chatverlauf.InvokeRequired)
+            {
+                SetTextCallback d = new SetTextCallback(addLineToChat);
+                this.Invoke(d, new object[] { line });
+            }
+            else
+            {
+                this.Chatverlauf.Items.Add(line);
+            }
+        }
+
+        private void addLineToUser(String line)
+        {
+            if (this.Benutzerliste.InvokeRequired)
+            {
+                SetTextCallback d = new SetTextCallback(addLineToUser);
+                this.Invoke(d, new object[] { line });
+            }
+            else
+            {
+                this.Benutzerliste.Items.Add(line);
+            }
+        }
+        //Threadsave auf das Formular zugreifen - Ende
+
         private void btnSend_Click(object sender, EventArgs e)
         {
             //strings mit leerzeichen auffüllen und zusammensetzen zur nachricht, die übertragen wird
-            String msg = "T" + "".PadRight(32) + txtSend.Text.PadRight(256);
+            String msg = "T" + IDS.PadRight(32) + txtSend.Text.PadRight(256);
             SendToServer(msg);
+            txtSend.Text = "";
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            //strings mit leerzeichen auffüllen und zusammensetzen zur nachricht, die übertragen wird
-            String msg = "Q" + "".PadRight(32) + txtSend.Text.PadRight(256);
-            SendToServer(msg);
-            working = false;
+            working = false; //listener stoppen
+            if (IDS != null)
+            {
+                //strings mit leerzeichen auffüllen und zusammensetzen zur nachricht, die übertragen wird
+                String msg = "Q" + IDS.PadRight(32) + txtSend.Text.PadRight(256);
+                SendToServer(msg);
+                s.Close(); //hier kann es zu einer exception kommen, wenn receivefrom noch wartet
+            }
+        }
+
+        private void txtSend_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Return)
+                btnSend_Click(sender, new EventArgs());
         }
     }
 
