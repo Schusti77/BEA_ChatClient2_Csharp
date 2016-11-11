@@ -115,10 +115,20 @@ namespace BEA_ChatClient_Csharp
             }
         }
 
-        public void SendToServer(String message)
+        public bool SendToServer(String message)
         {
             byte[] msg = Encoding.ASCII.GetBytes(message);
-            s.SendTo(msg, ServerEP);
+
+            try
+            {
+                s.SendTo(msg, ServerEP);
+                return true;
+            }
+            catch(SocketException er)
+            {
+                Chatverlauf.Items.Add("Fehler beim Senden aufgetreten: " + er.ErrorCode);
+                return false;
+            }
         }
 
         private void listen(Object obj)
