@@ -129,13 +129,13 @@ namespace BEA_ChatClient_Csharp
 
             while (working)
             {
-                    s.ReceiveFrom(msg, 0, msg.Length, SocketFlags.None, ref senderRemote);
+                s.ReceiveFrom(msg, 0, msg.Length, SocketFlags.None, ref senderRemote);
 
-                    Console.WriteLine(System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0'));
-                    MsgToProcess MTP = new MsgToProcess();
-                    MTP.Message = System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0');
-                    Console.WriteLine(System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0'));
-                    ThreadPool.QueueUserWorkItem(new WaitCallback(ProcessMessage), MTP);
+                Console.WriteLine(System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0'));
+                MsgToProcess MTP = new MsgToProcess();
+                MTP.Message = System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0');
+                Console.WriteLine(System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0'));
+                ThreadPool.QueueUserWorkItem(new WaitCallback(ProcessMessage), MTP);
             }
         }
 
@@ -167,7 +167,7 @@ namespace BEA_ChatClient_Csharp
                         //Argument1 = Benutzername
                         //Argument2 = Textnachricht
                         if (IDS != null)
-                            addLineToChat("["+ Argument1+"]: " + Argument2);
+                            addLineToChat("[" + Argument1 + "]: " + Argument2);
                         break;
                     }
                 case "S":
@@ -176,9 +176,20 @@ namespace BEA_ChatClient_Csharp
                         //Argument1 = IDS
                         //Argument2 = Leer
                         if (IDS != null)
+                        {
                             if (Argument1 == IDS)
                                 //Msg unverändert zurücksenden
                                 SendToServer(MTP.Message);
+                            UInt16 anzClients;
+                            if (UInt16.TryParse(Argument2, out anzClients))
+                            {
+                                if (anzClients != Benutzerliste.Items.Count)
+                                {   //anzahl der Benutzer stimmt nicht mehr
+                                    Benutzerliste.Invoke(new Action(() =>  Benutzerliste.Items.Clear()));
+                                    SendToServer("U" + IDS.PadRight(32) + "".PadRight(256));
+                                }
+                            }
+                        }
                         break;
                     }
                 case "U":
@@ -187,7 +198,7 @@ namespace BEA_ChatClient_Csharp
                         //Argument1 = Benutzername
                         //Argument2 = Leer
                         if (IDS != null)
-                            addLineToUser(Argument1);
+                            addLineToUserList(Argument1);
                         break;
                     }
                 default:
@@ -199,7 +210,9 @@ namespace BEA_ChatClient_Csharp
             }
         }
 
+        //Threadsave auf das Formular zugreifen
         delegate void SetTextCallback(string text);
+        delegate void DelTextCallback();
 
         private void addLineToChat(String line)
         {
@@ -214,11 +227,11 @@ namespace BEA_ChatClient_Csharp
             }
         }
 
-        private void addLineToUser(String line)
+        private void addLineToUserList(String line)
         {
             if (this.Benutzerliste.InvokeRequired)
             {
-                SetTextCallback d = new SetTextCallback(addLineToUser);
+                SetTextCallback d = new SetTextCallback(addLineToUserList);
                 this.Invoke(d, new object[] { line });
             }
             else
@@ -226,6 +239,19 @@ namespace BEA_ChatClient_Csharp
                 this.Benutzerliste.Items.Add(line);
             }
         }
+
+        //private void ClearUserList()
+        //{
+        //    if (this.Benutzerliste.InvokeRequired)
+        //    {
+        //        DelTextCallback d = new DelTextCallback();
+        //        this.Invoke(d, new object[] {  });
+        //    }
+        //    else
+        //    {
+        //        this.Benutzerliste.Items.Clear();
+        //    }
+        //}
         //Threadsave auf das Formular zugreifen - Ende
 
         private void btnSend_Click(object sender, EventArgs e)
