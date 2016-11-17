@@ -26,7 +26,7 @@ namespace BEA_ChatClient_Csharp
 
         private void btnConnect_Click(object sender, EventArgs e)
         {
-            Chatverlauf.Items.Add("[INFO]: Verbindungsversuch zu Server: " + txtHost.Text.Trim());
+            addLineToChat("[INFO]: Verbindungsversuch zu Server: " + txtHost.Text.Trim());
             username = txtUsername.Text.Trim();
             btnConnect.Enabled = false;
             IPHostEntry hostEntryClient = Dns.GetHostEntry(Dns.GetHostName());
@@ -59,12 +59,12 @@ namespace BEA_ChatClient_Csharp
                 //Server-Rechner hat keine IP-Adresse
                 //entweder keine aktive Netzwerkkarte oder irgendwas faul
                 Console.ForegroundColor = ConsoleColor.Red;
-                Chatverlauf.Items.Add("[Fehler]:Dieser Rechner hat keine Verbindung zum Server");
+                addLineToChat("[Fehler]:Dieser Rechner hat keine Verbindung zum Server");
                 btnConnect.Enabled = true;
                 return; //Funktion beenden
             }
-            Chatverlauf.Items.Add("[INFO]: Client aktiv auf IP: " + ClientEP.Address + ":" + ClientEP.Port);
-            Chatverlauf.Items.Add("[INFO]: Server IP ermittelt: " + ServerEP.Address + ":" + ServerEP.Port);
+            addLineToChat("[INFO]: Client aktiv auf IP: " + ClientEP.Address + ":" + ClientEP.Port);
+            addLineToChat("[INFO]: Server IP ermittelt: " + ServerEP.Address + ":" + ServerEP.Port);
 
             s = new Socket(ClientEP.Address.AddressFamily,
                 SocketType.Dgram,
@@ -82,8 +82,8 @@ namespace BEA_ChatClient_Csharp
             //strings mit leerzeichen auffüllen und zusammensetzen zur nachricht, die übertragen wird
             String msg = "A" + txtUsername.Text.PadRight(32) + "".PadRight(256);
             SendToServer(msg);
-            Chatverlauf.Items.Add("[INFO]: Anmeldeinformationen an Server übertragen");
-            Chatverlauf.Items.Add("[INFO]: Warte auf Antwort vom Server (timeout 5s)");
+            addLineToChat("[INFO]: Anmeldeinformationen an Server übertragen");
+            addLineToChat("[INFO]: Warte auf Antwort vom Server (timeout 5s)");
             //warten auf die Serverantwort
             DateTime starttime = DateTime.Now;
             TimeSpan timediff = new TimeSpan(0, 0, 5);
@@ -97,7 +97,7 @@ namespace BEA_ChatClient_Csharp
             }
             if (IDS == null)
             {
-                Chatverlauf.Items.Add("[Fehler]:Could not connect to server");
+                addLineToChat("[Fehler]:Could not connect to server");
                 working = false;
                 //Listener.Start();
                 btnConnect.Enabled = true;
@@ -105,7 +105,7 @@ namespace BEA_ChatClient_Csharp
             }
             else
             {
-                Chatverlauf.Items.Add("[OK]:Connection established");
+                addLineToChat("[OK]:Connection established");
                 Chatverlauf.Enabled = true;
                 txtSend.Enabled = true;
                 btnSend.Enabled = true;
@@ -126,7 +126,7 @@ namespace BEA_ChatClient_Csharp
             }
             catch(SocketException er)
             {
-                Chatverlauf.Items.Add("Fehler beim Senden aufgetreten: " + er.ErrorCode);
+                addLineToChat("Fehler beim Senden aufgetreten: " + er.ErrorCode);
                 return false;
             }
         }
@@ -139,13 +139,20 @@ namespace BEA_ChatClient_Csharp
 
             while (working)
             {
-                s.ReceiveFrom(msg, 0, msg.Length, SocketFlags.None, ref senderRemote);
-
-                Console.WriteLine(System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0'));
-                MsgToProcess MTP = new MsgToProcess();
-                MTP.Message = System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0');
-                Console.WriteLine(System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0'));
-                ThreadPool.QueueUserWorkItem(new WaitCallback(ProcessMessage), MTP);
+                try
+                {
+                    s.ReceiveFrom(msg, 0, msg.Length, SocketFlags.None, ref senderRemote);
+                    Console.WriteLine(System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0'));
+                    MsgToProcess MTP = new MsgToProcess();
+                    MTP.Message = System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0');
+                    Console.WriteLine(System.Text.Encoding.UTF8.GetString(msg).TrimEnd('\0'));
+                    ThreadPool.QueueUserWorkItem(new WaitCallback(ProcessMessage), MTP);
+                }
+                catch(SocketException e)
+                {
+                    addLineToChat("Fehler beim Starten des Listeners. Errorcode: " + e.ErrorCode.ToString() );
+                    addLineToChat(e.Message);
+                }
             }
         }
 
